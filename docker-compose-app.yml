@@ -1,7 +1,7 @@
 version: "2"
 
 services:
-  v12:
+  version1:
     build:
       context: .
       dockerfile: Dockerfile
@@ -9,7 +9,7 @@ services:
       - .:/go/src/redis-test
     links:
       - redis
-  v22:
+  version2:
     build:
       context: .
       dockerfile: Dockerfile
