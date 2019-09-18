@@ -1,0 +1,6 @@
+[Redis]
+  Host = "0.0.0.0:6379"
+  Password = ""
+  ReadTimeout = "5m"
+  WriteTimeout = "5m"
+  DialTimeout = "5m"
