@@ -49,11 +49,11 @@
             image_name - redis-test-err:0.0.1
 
     3. После чего
-    ```
-    docker run --network="host" {image_name}
-    ```
+        ```
+        docker run --network="host" {image_name}
+        ```
     
     4. Остановить redis
-    ```
-    docker-compose -f docker-compose-redis.yml down
-    ```
+        ```
+        docker-compose -f docker-compose-redis.yml down
+        ```
