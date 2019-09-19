@@ -113,7 +113,7 @@ func (s *service) CheckAliveMaster(errorsListen chan error) {
 	changer := s.repository.GetChanger()
 
 	// проверка времени отправки последнего сообщения от мастера
-	for range time.NewTicker(time.Millisecond * 700).C {
+	for range time.NewTicker(time.Second).C {
 		select {
 		case <-finishCheck:
 			break

@@ -37,14 +37,23 @@
         ```
         docker-compose -f docker-compose-redis.yml up
         ```
-    2. Выполнить docker build -f {docker_name} -t {image_name} . 
-     Для запуска основного приложения:
-        docker_name - DockerFile.main
-        image_name - redis-test:0.0.1
-     Для запуска вывода ошибок:
-        docker_name - DockerFile.err
-        image_name - redis-test-err:0.0.1
+    2. Выполнить
+        ```
+        docker build -f {docker_name} -t {image_name} . 
+        ```
+         Для запуска основного приложения:
+            docker_name - DockerFile.main
+            image_name - redis-test:0.0.1
+         Для запуска вывода ошибок:
+            docker_name - DockerFile.err
+            image_name - redis-test-err:0.0.1
 
-    3. После чего - docker run --network="host" {image_name}
+    3. После чего
+    ```
+    docker run --network="host" {image_name}
+    ```
     
-    4. Остановить redis docker-compose -f docker-compose-redis.yml down
+    4. Остановить redis
+    ```
+    docker-compose -f docker-compose-redis.yml down
+    ```

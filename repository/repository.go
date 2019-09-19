@@ -153,7 +153,7 @@ type Consumer struct {
 func (r *repository) StartConsumer() {
 	connect := r.provider.GetConnectRMQ()
 	r.taskQueue = connect.OpenQueue(QueueName)
-	ok := r.taskQueue.StartConsuming(10, time.Millisecond)
+	ok := r.taskQueue.StartConsuming(1, time.Millisecond)
 	if !ok {
 		r.logger.Log("start consuming", "fail")
 		return
