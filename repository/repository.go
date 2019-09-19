@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"redis-test/provider"
+	"github.com/Maftrek/redis-test/provider"
+	"strconv"
 	"time"
 
 	"github.com/adjust/rmq"
@@ -14,6 +15,7 @@ import (
 )
 
 const QueueName = "sub1"
+const QueueIds  = "id"
 const QueueErrorsName = "errors"
 const singSend = "send"
 const layout = "2006-01-02T15:04:05.999999999Z07:00"
@@ -30,6 +32,9 @@ type Repository interface {
 	GetQueueErrors() []string
 	IsExpireMsg() bool
 	IsWasConsumer() bool
+	IsChanger() bool
+	DeleteChanger(changerID int64)
+	GetChanger() int64
 
 	msgContainsError(data []byte)
 	randomData() []byte
@@ -48,10 +53,12 @@ type repository struct {
 // New repository
 func New(pr provider.Provider, logger log.Logger) (Repository, error) {
 	client := pr.GetConnectRedis()
+
 	clientID, err := client.ClientID().Result()
 	if err != nil {
 		return nil, err
 	}
+	client.LPush(QueueIds, clientID)
 
 	return &repository{
 		provider:      pr,
@@ -96,6 +103,17 @@ func (r *repository) IsGenerator() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (r *repository) checkGeneratorID(masterID int64) (bool, error) {
+	client := r.provider.GetConnectRedis()
+	res, err := client.Get("master").Int()
+	if err != nil {
+		r.logger.Log("err", err)
+		return false, err
+	}
+
+	return int64(res) == masterID, nil
 }
 
 func (r *repository) GeneratorAction() error {
@@ -197,15 +215,23 @@ func (r *repository) GetQueueErrors() []string {
 
 func (r *repository) DeleteOldMaster() int64 {
 	client := r.provider.GetConnectRedis()
-	count := client.Del("master")
-
-	timeNow := time.Now().Format(layout)
-
-	_, err := client.Set(singSend, timeNow, time.Second).Result()
+	res, err := client.Get("master").Int()
 	if err != nil {
 		r.logger.Log("err", err)
 		return 0
 	}
+
+	count := client.Del("master")
+
+	timeNow := time.Now().Format(layout)
+
+	_, err = client.Set(singSend, timeNow, time.Second).Result()
+	if err != nil {
+		r.logger.Log("err", err)
+		return 0
+	}
+
+	client.LRem(QueueIds, -1, res)
 
 	return count.Val()
 }
@@ -238,4 +264,37 @@ func (r *repository) IsExpireMsg() bool {
 	}
 	timeMatch := timeGet.Add(time.Second)
 	return timeMatch.Before(time.Now())
+}
+
+func (r *repository) IsChanger() bool {
+	return r.GetChanger() == r.clientID
+}
+
+func (r *repository) GetChanger() int64 {
+	client := r.provider.GetConnectRedis()
+
+	ids := client.LRange(QueueIds, 0, -1).Val()
+	var changerID int64
+	for _, id := range ids {
+		idNumber, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			r.logger.Log("err", err)
+			return 0
+		}
+		isMaster, err := r.checkGeneratorID(idNumber)
+		if err != nil {
+			r.logger.Log("err", err)
+			return 0
+		}
+		if !isMaster {
+			changerID = idNumber
+			break
+		}
+	}
+	return changerID
+}
+
+func (r *repository) DeleteChanger(changerID int64) {
+	client := r.provider.GetConnectRedis()
+	client.LRem(QueueIds, -1, changerID)
 }

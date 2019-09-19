@@ -2,7 +2,7 @@ package provider
 
 import (
 	"fmt"
-	"redis-test/models"
+	"github.com/Maftrek/redis-test/models"
 	"time"
 
 	"github.com/adjust/rmq"

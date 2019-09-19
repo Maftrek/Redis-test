@@ -1,5 +1,5 @@
 [Redis]
-  Host = "0.0.0.0:6378"
+  Host = "127.0.0.1:6378"
   Password = ""
   ReadTimeout = "5m"
   WriteTimeout = "5m"

@@ -3,7 +3,7 @@ package application
 import (
 	"os"
 	"os/signal"
-	"redis-test/service"
+	"github.com/Maftrek/redis-test/service"
 	"syscall"
 	"time"
 

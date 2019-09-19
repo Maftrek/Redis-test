@@ -1,7 +1,7 @@
 package service
 
 import (
-	"redis-test/repository"
+	"github.com/Maftrek/redis-test/repository"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -109,6 +109,9 @@ func (s *service) CheckAliveMaster(errorsListen chan error) {
 		}
 	}()
 
+	counterWithoutMaster := 0
+	changer := s.repository.GetChanger()
+
 	// проверка времени отправки последнего сообщения от мастера
 	for range time.NewTicker(time.Millisecond * 700).C {
 		select {
@@ -117,8 +120,27 @@ func (s *service) CheckAliveMaster(errorsListen chan error) {
 		default:
 		}
 
-		// если отправки не было больше секунды, то слушатель начинает настройку под мастера
+		// если сменщик мастера не успевает сделать настройку за две итерации без мастера, то сменшик заменяется
+		if counterWithoutMaster >= 2 && changer == s.repository.GetChanger() {
+			s.logger.Log("delete changer", changer)
+			s.repository.DeleteChanger(changer)
+			counterWithoutMaster = 0
+		}
+
+		changer = s.repository.GetChanger()
+
+		// если отправки не было больше секунды, то слушатель проверяет является ли он сменщиком мастера
+		// если да, то начинает настройку под мастера
 		if s.repository.IsExpireMsg() {
+			s.logger.Log("master not response, changer", changer)
+
+			if !s.repository.IsChanger() {
+				if changer == s.repository.GetChanger() {
+					s.logger.Log("changer not response", changer)
+					counterWithoutMaster++
+				}
+				continue
+			}
 			// удаление старого мастера
 			countDel := s.repository.DeleteOldMaster()
 			s.logger.Log("delete of a broken master from queue", countDel)
@@ -128,6 +150,8 @@ func (s *service) CheckAliveMaster(errorsListen chan error) {
 				errorsListen <- err
 				s.logger.Log("err", err)
 			}
+		} else {
+			counterWithoutMaster = 0
 		}
 	}
 }

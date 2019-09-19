@@ -37,7 +37,14 @@
         ```
         docker-compose -f docker-compose-redis.yml up
         ```
-    2. В папке проекта имеется две сборки для mac OS и linux - mac, linux соотвественно.
-    Нужно выбрать файл подходящий под систему и запустить одно приложение или несколько (для запуска приложения - ./fileName)
-    3. Для получения ошибок нужно запустить файл следующим образом - ./fileName getErrors
-    4. Остановить redis Остановить docker-compose -f docker-compose-redis.yml down
+    2. Выполнить docker build -f {docker_name} -t {image_name} . 
+     Для запуска основного приложения:
+        docker_name - DockerFile.main
+        image_name - redis-test:0.0.1
+     Для запуска вывода ошибок:
+        docker_name - DockerFile.err
+        image_name - redis-test-err:0.0.1
+
+    3. После чего - docker run --network="host" {image_name}
+    
+    4. Остановить redis docker-compose -f docker-compose-redis.yml down

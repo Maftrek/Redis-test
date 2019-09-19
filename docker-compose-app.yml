@@ -4,17 +4,17 @@ services:
   version1:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: DockerFile.main
     volumes:
-      - .:/go/src/redis-test
+      - .:/github.com/Maftrek/redis-test
     links:
       - redis
   version2:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: DockerFile.main
     volumes:
-      - .:/go/src/redis-test
+      - .:/github.com/Maftrek/redis-test
     links:
       - redis
   redis:
