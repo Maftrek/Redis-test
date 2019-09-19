@@ -21,6 +21,11 @@
 
 **Запуск приложения.**
 
+```
+go get -u github.com/Maftrek/redis-test
+cd go/src/github.com/Maftrek/redis-test
+```
+
 * Вариант 1:
 
     Для запуска двух экземпляров приложения (слушатель/генератор) и redis нужно выполнить команду
