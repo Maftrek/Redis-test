@@ -1,8 +1,6 @@
 
 FROM golang:1.12
 
-WORKDIR github.com/Maftrek/redis-test/
-
 COPY . github.com/Maftrek/redis-test/
 
 WORKDIR github.com/Maftrek/redis-test/

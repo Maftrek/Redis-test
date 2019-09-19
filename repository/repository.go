@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"github.com/Maftrek/redis-test/provider"
 	"strconv"
 	"time"
+
+	"github.com/Maftrek/redis-test/provider"
 
 	"github.com/adjust/rmq"
 	"github.com/go-kit/kit/log"
@@ -15,7 +16,7 @@ import (
 )
 
 const QueueName = "sub1"
-const QueueIds  = "id"
+const QueueIds = "id"
 const QueueErrorsName = "errors"
 const singSend = "send"
 const layout = "2006-01-02T15:04:05.999999999Z07:00"
@@ -195,7 +196,7 @@ func (r *repository) StopConsumer() {
 
 func (consumer *Consumer) Consume(delivery rmq.Delivery) {
 	consumer.data <- []byte(delivery.Payload())
-	delivery.Ack()
+	defer delivery.Ack()
 }
 
 func (r *repository) HandlerMsg() {

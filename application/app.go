@@ -3,9 +3,10 @@ package application
 import (
 	"os"
 	"os/signal"
-	"github.com/Maftrek/redis-test/service"
 	"syscall"
 	"time"
+
+	"github.com/Maftrek/redis-test/service"
 
 	"github.com/go-kit/kit/log"
 )

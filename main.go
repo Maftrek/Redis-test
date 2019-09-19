@@ -2,9 +2,9 @@ package main
 
 import (
 	"os"
-	"github.com/Maftrek/redis-test/models"
 
 	"github.com/Maftrek/redis-test/application"
+	"github.com/Maftrek/redis-test/models"
 	"github.com/Maftrek/redis-test/provider"
 	"github.com/Maftrek/redis-test/repository"
 	"github.com/Maftrek/redis-test/service"

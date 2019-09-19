@@ -1,8 +1,10 @@
 package service
 
 import (
-	"github.com/Maftrek/redis-test/repository"
+	"errors"
 	"time"
+
+	"github.com/Maftrek/redis-test/repository"
 
 	"github.com/go-kit/kit/log"
 )
@@ -121,34 +123,15 @@ func (s *service) CheckAliveMaster(errorsListen chan error) {
 		}
 
 		// если сменщик мастера не успевает сделать настройку за две итерации без мастера, то сменшик заменяется
-		if counterWithoutMaster >= 2 && changer == s.repository.GetChanger() {
-			s.logger.Log("delete changer", changer)
-			s.repository.DeleteChanger(changer)
-			counterWithoutMaster = 0
-		}
+		s.changeChanger(&counterWithoutMaster, changer)
 
 		changer = s.repository.GetChanger()
 
-		// если отправки не было больше секунды, то слушатель проверяет является ли он сменщиком мастера
-		// если да, то начинает настройку под мастера
+		// проверка не было ли отправки больше секунды назад
 		if s.repository.IsExpireMsg() {
-			s.logger.Log("master not response, changer", changer)
-
-			if !s.repository.IsChanger() {
-				if changer == s.repository.GetChanger() {
-					s.logger.Log("changer not response", changer)
-					counterWithoutMaster++
-				}
-				continue
-			}
-			// удаление старого мастера
-			countDel := s.repository.DeleteOldMaster()
-			s.logger.Log("delete of a broken master from queue", countDel)
-
-			err := s.SettingMaster()
+			err := s.actionExpireMsg(&counterWithoutMaster, changer)
 			if err != nil {
 				errorsListen <- err
-				s.logger.Log("err", err)
 			}
 		} else {
 			counterWithoutMaster = 0
@@ -158,4 +141,45 @@ func (s *service) CheckAliveMaster(errorsListen chan error) {
 
 func (s *service) GetErrors() []string {
 	return s.repository.GetQueueErrors()
+}
+
+func (s *service) actionExpireMsg(counterWithoutMaster *int, changer int64) error {
+	if counterWithoutMaster == nil {
+		return errors.New("nil counter")
+	}
+	// слушатель проверяет является ли он сменщиком мастера
+	// если да, то начинает настройку под мастера
+	if s.repository.IsChanger() {
+		// удаление старого мастера
+		countDel := s.repository.DeleteOldMaster()
+		s.logger.Log("delete of a broken master from queue", countDel)
+
+		err := s.SettingMaster()
+		if err != nil {
+			s.logger.Log("err", err)
+			return err
+		}
+		return nil
+	}
+
+	// если нет, то начинает считать сколько итераций мастера нет
+	if changer == s.repository.GetChanger() {
+		s.logger.Log("changer not response", changer)
+		*counterWithoutMaster++
+	}
+
+	return nil
+}
+
+// если сменщик мастера не успевает сделать настройку за две итерации без мастера, то сменшик заменяется
+func (s *service) changeChanger(counterWithoutMaster *int, changer int64) {
+	if counterWithoutMaster == nil {
+		return
+	}
+
+	if *counterWithoutMaster >= 2 && changer == s.repository.GetChanger() {
+		s.logger.Log("delete changer", changer)
+		s.repository.DeleteChanger(changer)
+		*counterWithoutMaster = 0
+	}
 }
